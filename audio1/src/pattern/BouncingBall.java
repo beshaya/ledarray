@@ -1,12 +1,16 @@
 package pattern;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import pattern.util.IntValue;
 
 public class BouncingBall implements Pattern{
 
@@ -20,6 +24,7 @@ public class BouncingBall implements Pattern{
 	private int fmin=1;
 	private int cut=10;
 	private int gain=50;
+	private Color myColor = new Color(255,0,0);
 	
 	//States whether or not the pattern's PatternVis is selected
 	//Should be part of patternvis?
@@ -41,6 +46,7 @@ public class BouncingBall implements Pattern{
 	final JTextField minfreq = new JTextField("1");
 	final JTextField maxfreq = new JTextField("4");
 	final JPanel control = new JPanel();
+	final JButton setColor = new JButton("Set Color");
 	
 	  final JSlider cutS = new JSlider(JSlider.VERTICAL, 0, 20, 5);
 	  final JSlider gainS = new JSlider(JSlider.VERTICAL,0,100,10);
@@ -225,6 +231,15 @@ public class BouncingBall implements Pattern{
 			}
 		});
 		
+		setColor.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				Color tempColor = JColorChooser.showDialog(control, "Pick a Color", myColor);
+				if (tempColor != null)
+					myColor = tempColor;
+				setColor.setBackground(myColor);
+			}
+		});
+		
 		control.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		control.setPreferredSize(new Dimension(200,400));
@@ -253,12 +268,14 @@ public class BouncingBall implements Pattern{
 		c.gridx=1;c.gridy=5;
 		control.add(maxfreq,c);
 		c.gridx=0;c.gridy=6;
-		control.add(cutS,c);
-		c.gridx=1;c.gridy=6;
-		control.add(gainS,c);
+		control.add(setColor,c);
 		c.gridx=0;c.gridy=7;
-		control.add(new JLabel("cut"),c);
+		control.add(cutS,c);
 		c.gridx=1;c.gridy=7;
+		control.add(gainS,c);
+		c.gridx=0;c.gridy=8;
+		control.add(new JLabel("cut"),c);
+		c.gridx=1;c.gridy=8;
 		control.add(new JLabel("gain"),c);
 		control.setVisible(true);
 		
@@ -293,22 +310,30 @@ public class BouncingBall implements Pattern{
 			ydir = -ydir;
 		}
 		lastTime = time;
-		frame[(int)x][(int)y][0] = 50;
-		frame[(int)x][(int)y][1] = 50;
-		frame[(int)x][(int)y][2] = 50;
+		int dispx = Math.min((int)x, maxx);
+		dispx = Math.max(0,dispx);
+		int dispy = Math.min((int)y, maxy);
+		dispy = Math.max(0,dispy);
+		frame[dispx][dispy][0] = 50;
+		frame[dispx][dispy][1] = 50;
+		frame[dispx][dispy][2] = 50;
 		for(int i=0;i<d.width;i++){
 			for(int j=0;j<d.height;j++){
-				double distance = Math.sqrt((i-x)*(i-x) + (j-y)*(j-y)+.0001);
-				int glow = (int)(intensity / distance);
+				double distance = ((i-x)*(i-x) + (j-y)*(j-y)+.0001);
+				double glow = (int)(intensity / distance);
 				glow = Math.max(Math.min(glow, 205), 0);
-				frame[i][j][0] += glow;
-				frame[i][j][1] += 0;
-				frame[i][j][2] += 0;
+				frame[i][j][0] += (glow * myColor.getRed()/255.);
+				frame[i][j][1] += (glow * myColor.getGreen()/255.);
+				frame[i][j][2] += (glow * myColor.getBlue()/255.);
 			}
 		}
 
 		
 		return frame;
+	}
+	
+	public boolean[][] getAffectedPixels(){
+		return new boolean[d.width][d.height];
 	}
 
 	@Override
@@ -345,5 +370,12 @@ public class BouncingBall implements Pattern{
 		gainS.repaint();
 	}
 
-
+	public IntValue getFreqMin(){
+		return new IntValue(fmin);
+	}
+	
+	public IntValue getFreqMax(){
+		return new IntValue(fmax);
+	}
+	
 }
