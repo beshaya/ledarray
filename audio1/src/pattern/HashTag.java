@@ -10,10 +10,10 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import pattern.util.*;
-
+import core.LightShow;
 public class HashTag extends Border{
-	public HashTag(int xsize, int ysize, double[] fftdata){
-		super(xsize,ysize,fftdata);
+	public HashTag(int xsize, int ysize, double[] fftdata, LightShow main){
+		super(xsize,ysize,fftdata, main);
 	}
 	
 	@Override

@@ -1,6 +1,7 @@
 package pattern;
 
 import java.awt.*;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -10,6 +11,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import pattern.util.*;
+import core.LightShow;
 
 public class SolidRectPattern implements Pattern{
 
@@ -48,7 +50,7 @@ public class SolidRectPattern implements Pattern{
 	final TextSlider maxfreq = new TextSlider();
 		
 	
-	public SolidRectPattern(int xsize, int ysize, double[] fftdata){
+	public SolidRectPattern(int xsize, int ysize, double[] fftdata, LightShow mainprogram){
 		d.setSize(xsize,ysize);
 		this.fftdata = fftdata;
 		selected=false;

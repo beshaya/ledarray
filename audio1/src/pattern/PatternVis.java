@@ -63,10 +63,10 @@ public class PatternVis extends JPanel{
         int xsize = frame.length;
         int ysize = frame[0].length;
         Dimension mySize = this.getSize();
-        int dotwidth = Math.min((mySize.height-30)/ysize,mySize.width/xsize);
+        int dotwidth = Math.max(Math.min((mySize.height-30)/ysize,mySize.width/xsize),2);
         for(int i=0;i<xsize;i++){
         	for(int j=0;j<ysize;j++){
-        		g2.setColor(new Color(frame[i][j][0],frame[i][j][1],frame[i][j][2]));
+        		g2.setColor(makeColor(frame[i][j][0],frame[i][j][1],frame[i][j][2]));
         		g2.fillRect(i*dotwidth+15,30+j*dotwidth,dotwidth-1,dotwidth-1);
         	}
         }
@@ -76,6 +76,13 @@ public class PatternVis extends JPanel{
         	g2.drawRect(2, 2, d.width-4, d.height-4);
         }
         
+	}
+	
+	private Color makeColor(int r, int g, int b){
+		r = Math.min(Math.max(r, 0),255);
+		g = Math.min(Math.max(g, 0),255);
+		b = Math.min(Math.max(b, 0),255);
+		return new Color(r,g,b);
 	}
 	
 }

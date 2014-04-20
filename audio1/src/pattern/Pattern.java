@@ -2,6 +2,8 @@ package pattern;
 
 import javax.swing.*;
 
+import core.PeakDetector;
+
 import pattern.util.IntValue;
 
 

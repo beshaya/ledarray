@@ -9,12 +9,12 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import pattern.util.IntValue;
-
+import core.LightShow;
 public class RectPattern extends SolidRectPattern{
 
 
-	public RectPattern(int xsize, int ysize, double[] fftdata) {
-		super(xsize, ysize, fftdata);
+	public RectPattern(int xsize, int ysize, double[] fftdata, LightShow main) {
+		super(xsize, ysize, fftdata,main);
 		this.control.remove(this.setColor);
 	}
 

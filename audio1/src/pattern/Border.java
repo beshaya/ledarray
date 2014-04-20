@@ -10,7 +10,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import pattern.util.*;
-
+import core.LightShow;
+import core.PeakDetector;
 public class Border implements Pattern{
 
 	final protected Dimension d = new Dimension(0,0);
@@ -48,9 +49,10 @@ public class Border implements Pattern{
 	final TextSlider width = new TextSlider();
 	final TextSlider minfreq = new TextSlider();
 	final TextSlider maxfreq = new TextSlider();
-		
+	final JCheckBox source = new JCheckBox();
+	PeakDetector peaks;	
 	
-	public Border(int xsize, int ysize, double[] fftdata){
+	public Border(int xsize, int ysize, double[] fftdata, LightShow main){
 		d.setSize(xsize,ysize);
 		this.fftdata = fftdata;
 		selected=false;
@@ -60,6 +62,7 @@ public class Border implements Pattern{
 		miny.setValue(0);
 		maxy.setValue(ysize-1);
 		setColor.setBackground(myColor);
+		this.peaks = main.getpeakdetector();
 				
 		//Create the elements for the control panel and their listeners
 		cutP.setup(cut, 0, 20, TextSlider.VERTICAL);
@@ -84,7 +87,7 @@ public class Border implements Pattern{
 		//put everything into the frick'n layout
 		control.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
-		control.setPreferredSize(new Dimension(300,400));
+		control.setPreferredSize(new Dimension(300,500));
 		c.gridx=0;c.gridy=0;c.gridwidth=2;c.anchor=GridBagConstraints.FIRST_LINE_START;
 		c.fill=GridBagConstraints.BOTH;
 		control.add(new JLabel("x min"),c);
@@ -112,11 +115,16 @@ public class Border implements Pattern{
 		control.add(minfreq,c);
 		c.gridx=0;c.gridy++;
 		control.add(new JLabel("max frequency"),c);
+		
 		c.gridx=0;c.gridy++;
 		control.add(maxfreq,c);
 		c.gridx=0;c.gridy++;
 		control.add(setColor,c);
 		c.gridx=0;c.gridy++;c.gridwidth=1;
+		control.add(new JLabel("Use Beat Detector?"),c);
+		c.gridx=1;
+		control.add(source,c);
+		c.gridx=0;c.gridy++;
 		control.add(cutP,c);
 		c.gridx=1;
 		control.add(gainP,c);
@@ -128,30 +136,47 @@ public class Border implements Pattern{
 		
 	}
 	
+	Color[] colors = {Color.blue, Color.red,new Color(144,0,144), Color.yellow, Color.green, Color.cyan, Color.orange};
+	int lastpll=0;
+	long beattime=0; 
+	
 	@Override
 	public int[][][] getFrame() {
 		int[][][] frame = new int[d.width][d.height][3];
-		double bass =0;
-		//24000 should be bin 512
-		int minbin = fmin.getValue()*fftdata.length/2/24000;
-		int maxbin = fmax.getValue()*fftdata.length/2/24000;
-       	for(int i=minbin;i<maxbin;i++){
-       		bass += fftdata[i] *fftdata[i];
-       		//System.out.print(i+" ");
-       	}
-       	double intensity = ((int)(Math.log(bass))-cut.getValue());
-       	if((Math.log(bass)) == Double.NEGATIVE_INFINITY){
-       		intensity = 0;
-       	}
-       	intensity = intensity * gain.getValue();
-       	if(intensity > 255) intensity=255;
-       	if(intensity <0) intensity =0;
-       	intensity = intensity / 255;
-		for(int i=0;i<d.width;i++){
+		double intensity;
+		if(source.isSelected()){
+			double pll = peaks.getpll();
+			if(pll >= lastpll+1){
+				lastpll = (int)pll;
+				beattime = System.currentTimeMillis();
+			}
+			long now = System.currentTimeMillis();
+			//pll = Math.max(lastpll,pll);
+			Color thisColor = colors[(int)pll%colors.length];
+			intensity = Math.min(Math.max(1.5 - (now-beattime) * .005,0),1);
+		}else{
+			double bass =0;
+			//24000 should be bin 512
+			int minbin = fmin.getValue()*fftdata.length/2/24000;
+			int maxbin = fmax.getValue()*fftdata.length/2/24000;
+	       	for(int i=minbin;i<maxbin;i++){
+	       		bass += fftdata[i] *fftdata[i];
+	       		//System.out.print(i+" ");
+	       	}
+	       	intensity = ((int)(Math.log(bass))-cut.getValue());
+	       	if((Math.log(bass)) == Double.NEGATIVE_INFINITY){
+	       		intensity = 0;
+	       	}
+	       	intensity = intensity * gain.getValue();
+	       	if(intensity > 255) intensity=255;
+	       	if(intensity <0) intensity =0;
+	       	intensity = intensity / 255;
+		}
+	    for(int i=0;i<d.width;i++){
 			boolean xborder = (i>=minx.getValue() && i<= minx.getValue() + thick.getValue() || i<=maxx.getValue() && i >= maxx.getValue() - thick.getValue());
 			for(int j=0;j<d.height;j++){
 				boolean yborder = (j>=miny.getValue() && j<= miny.getValue() + thick.getValue() || j<=maxy.getValue() && j >= maxy.getValue() - thick.getValue());
-				if(yborder || xborder){
+				if((yborder || xborder) && j>=miny.getValue() && j<=maxy.getValue() && i>=minx.getValue() && i<=maxx.getValue()){
 					frame[i][j][0] = (int)(intensity * myColor.getRed());
 					frame[i][j][1] = (int)(intensity * myColor.getGreen());
 					frame[i][j][2] = (int)(intensity * myColor.getBlue());
@@ -183,7 +208,7 @@ public class Border implements Pattern{
 			boolean xborder = (i>=minx.getValue() && i<=maxx.getValue() && (i<= minx.getValue() + thick.getValue() || i >= maxx.getValue() - thick.getValue()));
 			for(int j=0;j<d.height;j++){
 				boolean yborder = (j>=miny.getValue() && j<=maxy.getValue() && (j<= miny.getValue() + thick.getValue() || j >= maxy.getValue() - thick.getValue()));
-				frame[i][j] = (yborder || xborder);
+				frame[i][j] = (yborder || xborder) && j>=miny.getValue() && j<=maxy.getValue() && i>=minx.getValue() && i<=maxx.getValue();
 			}
 		}
 		return frame;

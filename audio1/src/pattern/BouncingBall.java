@@ -295,18 +295,18 @@ public class BouncingBall implements Pattern{
 		long time = System.currentTimeMillis();
 		x+=xdir*(time-lastTime)/30.;
 		y+=ydir*(time-lastTime)/30.;
-		if(x >= d.width){
-			x = 2*d.width - x;
+		if(x >= maxx){
+			x = 2*maxx - x;
 			xdir = -xdir;
-		}else if(x <0){
-			x = -1*x;
+		}else if(x < minx){
+			x = (minx-x) + minx;
 			xdir = -xdir;
 		}
-		if(y >= d.height){
-			y = 2*d.height - y;
+		if(y >= maxy){
+			y = 2*maxy - y;
 			ydir = -ydir;
-		}else if(y <0){
-			y = -1*y;
+		}else if(y <miny){
+			y = miny - y + miny;
 			ydir = -ydir;
 		}
 		lastTime = time;
